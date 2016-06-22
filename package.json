@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "sng": "0.2.1"
+  },
+  "scripts": {
+    "start": "sng -n '127.0.0.1:8090' -p '127.0.0.1:8089' -b zend"
   }
 }
