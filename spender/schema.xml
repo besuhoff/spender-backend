@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="spender" defaultIdMethod="native">
+    <table name="user" phpName="User">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="gapi_user_id" type="varchar" size="255" required="true"/>
+        <behavior name="timestampable" />
+    </table>
+    <table name="category" phpName="Category">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="name" type="varchar" size="255" required="true" />
+        <behavior name="timestampable" />
+    </table>
+    <table name="payment_method" phpName="PaymentMethod">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="name" type="varchar" size="255" required="true" />
+        <column name="currency" type="varchar" size="24" required="true" />
+        <behavior name="timestampable" />
+    </table>
+    <table name="expense" phpName="Expense">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="user_id" type="integer" required="true"/>
+        <column name="category_id" type="integer" required="true"/>
+        <column name="payment_method_id" type="integer" required="true"/>
+        <foreign-key foreignTable="user">
+            <reference local="user_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="category">
+            <reference local="category_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="payment_method">
+            <reference local="payment_method_id" foreign="id"/>
+        </foreign-key>
+        <behavior name="timestampable" />
+    </table>
+</database>
