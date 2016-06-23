@@ -35,8 +35,22 @@ if (!$gapiUserId && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
 
 $app->path('/payment-methods', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
-        $paymentMethods = \Base\PaymentMethodQuery::create()->orderByName()->findByUserId($user->getId());
-        return $paymentMethods->toArray();
+        $paymentMethods = \Base\PaymentMethodQuery::create()
+            ->orderByName()
+            ->addSelfSelectColumns()
+            ->useExpenseQuery('expense', 'LEFT JOIN')
+            ->withColumn('IFNULL(SUM(expense.amount), 0)', 'Expenses')
+            ->endUse()
+            ->useIncomeQuery('income', 'LEFT JOIN')
+            ->withColumn('IFNULL(SUM(income.amount), 0)', 'Incomes')
+            ->endUse()
+            ->groupById()
+            ->groupByUserId()
+            ->filterByUserId($user->getId())
+            ->find()
+            ->toArray();
+
+        return $paymentMethods;
     });
 });
 
@@ -47,16 +61,38 @@ $app->path('/categories', function($request) use($app, $user) {
     });
 });
 
+$app->path('/income-categories', function($request) use($app, $user) {
+    $app->get(function($request) use($app, $user) {
+        $incomeCategories = \Base\IncomeCategoryQuery::create()->orderByName()->findByUserId($user->getId());
+        return $incomeCategories->toArray();
+    });
+});
+
 $app->path('/expenses', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $expense = new Expense();
         $expense->setAmount($request->Amount);
         $expense->setCategoryId($request->CategoryId);
         $expense->setPaymentMethodId($request->PaymentMethodId);
+        $expense->setComment($request->Comment);
         $user->addExpense($expense);
         $user->save();
 
         return $expense->toArray();
+    });
+});
+
+$app->path('/incomes', function($request) use($app, $user) {
+    $app->post(function($request) use($app, $user) {
+        $income = new Income();
+        $income->setAmount($request->Amount);
+        $income->setIncomeCategoryId($request->IncomeCategoryId);
+        $income->setPaymentMethodId($request->PaymentMethodId);
+        $income->setComment($request->Comment);
+        $user->addIncome($income);
+        $user->save();
+
+        return $income->toArray();
     });
 });
 

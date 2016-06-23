@@ -3,9 +3,20 @@
     <table name="user" phpName="User">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="gapi_user_id" type="varchar" size="255" required="true"/>
+        <column name="email" type="varchar" size="1024" required="true"/>
+        <column name="name" type="varchar" size="1024" required="true"/>
         <behavior name="timestampable" />
     </table>
     <table name="category" phpName="Category">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="name" type="varchar" size="255" required="true" />
+        <column name="user_id" type="integer" required="true"/>
+        <foreign-key foreignTable="user">
+            <reference local="user_id" foreign="id"/>
+        </foreign-key>
+        <behavior name="timestampable" />
+    </table>
+    <table name="income_category" phpName="IncomeCategory">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
         <column name="user_id" type="integer" required="true"/>
@@ -27,6 +38,7 @@
     <table name="expense" phpName="Expense">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="amount" type="float" required="true"/>
+        <column name="comment" type="varchar" size="2048"/>
         <column name="user_id" type="integer" required="true"/>
         <column name="category_id" type="integer" required="true"/>
         <column name="payment_method_id" type="integer" required="true"/>
@@ -35,6 +47,24 @@
         </foreign-key>
         <foreign-key foreignTable="category">
             <reference local="category_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="payment_method">
+            <reference local="payment_method_id" foreign="id"/>
+        </foreign-key>
+        <behavior name="timestampable" />
+    </table>
+    <table name="income" phpName="Income">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="amount" type="float" required="true"/>
+        <column name="comment" type="varchar" size="2048"/>
+        <column name="user_id" type="integer" required="true"/>
+        <column name="income_category_id" type="integer" required="true"/>
+        <column name="payment_method_id" type="integer" required="true"/>
+        <foreign-key foreignTable="user">
+            <reference local="user_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="income_category">
+            <reference local="income_category_id" foreign="id"/>
         </foreign-key>
         <foreign-key foreignTable="payment_method">
             <reference local="payment_method_id" foreign="id"/>
