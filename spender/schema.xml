@@ -18,6 +18,7 @@
     </table>
     <table name="expense" phpName="Expense">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="amount" type="float" required="true"/>
         <column name="user_id" type="integer" required="true"/>
         <column name="category_id" type="integer" required="true"/>
         <column name="payment_method_id" type="integer" required="true"/>
