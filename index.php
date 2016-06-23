@@ -2,9 +2,27 @@
 require __DIR__ . '/vendor/autoload.php';
 
 header('Access-Control-Allow-Origin: http://spender.pereborstudio.dev:8081');
+header('Access-Control-Allow-Headers: X-Auth-Token');
+define('GAPI_CLIENT_ID', '843225840486-ilkj47kggue9tvh6ajfvvog45mertgfg.apps.googleusercontent.com');
 
-// Your App
+$validUser = false;
+$token = isset($_SERVER['HTTP_X_AUTH_TOKEN']) ? $_SERVER['HTTP_X_AUTH_TOKEN'] : '';
+
 $app = new Bullet\App();
+
+if ($token) {
+    $gapiResponse = json_decode(file_get_contents('https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=' . urlencode($token)));
+
+    if ($gapiResponse->aud === GAPI_CLIENT_ID) {
+        $validUser = true;
+    }
+}
+
+if (!$validUser && $_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
+    echo $app->response(403);
+    exit();
+};
+
 $app->path('/payment-methods', function($request) use($app) {
     $app->get(function($request) {
         return [
