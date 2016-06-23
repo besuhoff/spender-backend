@@ -52,6 +52,16 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 
         return $paymentMethods;
     });
+
+    $app->post(function($request) use($app, $user) {
+        $paymentMethod = new PaymentMethod();
+        $paymentMethod->setName($request->Name);
+        $paymentMethod->setCurrency($request->Currency);
+        $user->addPaymentMethod($paymentMethod);
+        $user->save();
+
+        return $paymentMethod->toArray();
+    });
 });
 
 $app->path('/categories', function($request) use($app, $user) {
