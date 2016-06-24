@@ -3,6 +3,7 @@
     "sng": "0.2.1"
   },
   "scripts": {
-    "start": "sng -n '127.0.0.1:8090' -p '127.0.0.1:8089' -b zend"
+    "start": "sng -n '127.0.0.1:8090' -p '127.0.0.1:8089' -b zend",
+    "propel": "cd spender; ../vendor/bin/propel sql:build; ../vendor/bin/propel model:build; ../vendor/bin/propel config:convert; cd ..; composer dump-autoload"
   }
 }
