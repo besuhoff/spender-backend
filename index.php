@@ -91,12 +91,64 @@ $app->path('/categories', function($request) use($app, $user) {
         $categories = CategoryQuery::create()->orderByName()->findByUserId($user->getId());
         return $categories->toArray();
     });
+
+    $app->post(function($request) use($app, $user) {
+        $category = new Category();
+        $category->setName($request->Name);
+        $user->addCategory($category);
+        $user->save();
+
+        return $category->toArray();
+    });
+
+    $app->param('int', function($request, $categoryId) use($app, $user) {
+        $app->patch(function ($request) use ($app, $user, $categoryId) {
+            $category = CategoryQuery::create()->findOneById($categoryId);
+            $category->setName($request->Name);
+            $category->save();
+
+            return $category->toArray();
+        });
+
+        $app->delete(function ($request) use ($app, $user, $categoryId) {
+            $category = CategoryQuery::create()->findOneById($categoryId);
+            $category->delete();
+
+            return '{}';
+        });
+    });
 });
 
 $app->path('/income-categories', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $incomeCategories = IncomeCategoryQuery::create()->orderByName()->findByUserId($user->getId());
         return $incomeCategories->toArray();
+    });
+
+    $app->post(function($request) use($app, $user) {
+        $category = new IncomeCategory();
+        $category->setName($request->Name);
+        $user->addIncomeCategory($category);
+        $user->save();
+
+        return $category->toArray();
+    });
+
+    $app->param('int', function($request, $categoryId) use($app, $user) {
+        $app->patch(function ($request) use ($app, $user, $categoryId) {
+            $category = IncomeCategoryQuery::create()->findOneById($categoryId);
+            $category->setName($request->Name);
+            $category->save();
+
+            return $category->toArray();
+        });
+
+        $app->delete(function ($request) use ($app, $user, $categoryId) {
+            $category = IncomeCategoryQuery::create()->findOneById($categoryId);
+            $category->delete();
+
+            return '{}';
+        });
     });
 });
 
