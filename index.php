@@ -39,22 +39,39 @@ if (!$gapiUserId) {
 
 $app->path('/payment-methods', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
-        $paymentMethods = PaymentMethodQuery::create()
-            ->orderByName()
-            ->addSelfSelectColumns()
-            ->useExpenseQuery('expense', 'LEFT JOIN')
-            ->withColumn('IFNULL(SUM(expense.amount), 0)', 'Expenses')
-            ->endUse()
-            ->useIncomeQuery('income', 'LEFT JOIN')
-            ->withColumn('IFNULL(SUM(income.amount), 0)', 'Incomes')
-            ->endUse()
-            ->groupById()
-            ->groupByUserId()
-            ->filterByUserId($user->getId())
-            ->find()
-            ->toArray();
+        $incomes = IncomeQuery::create()
+            ->groupByPaymentMethodId()
+            ->withColumn('SUM(amount)', 'sum');
 
-        return $paymentMethods;
+        $expenses = ExpenseQuery::create()
+            ->groupByPaymentMethodId()
+            ->withColumn('SUM(amount)', 'sum');
+
+        $paymentMethods = PaymentMethodQuery::create()
+            ->clearSelectColumns()
+            ->addAsColumn('Expenses', 'expenses.sum')
+            ->addAsColumn('Incomes', 'incomes.sum');
+
+        $phpFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_PHPNAME);
+        $sqlFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_FIELDNAME);
+
+        $tableName = \Map\PaymentMethodTableMap::TABLE_NAME;
+
+        foreach($phpFieldNames as $index => $fieldName) {
+            $paymentMethods->addAsColumn($fieldName, $tableName . '.' . $sqlFieldNames[$index]);
+        }
+
+        $con = \Propel\Runtime\Propel::getWriteConnection(\Map\PaymentMethodTableMap::DATABASE_NAME);
+        $sql = "{$paymentMethods->createSelectSql()} $tableName
+            LEFT OUTER JOIN ({$expenses->createSelectSql()}) AS expenses ON expenses.payment_method_id = {$tableName}.id
+            LEFT OUTER JOIN ({$incomes->createSelectSql()}) AS incomes ON incomes.payment_method_id = {$tableName}.id
+            WHERE payment_method.user_id = :id
+            ORDER BY {$tableName}.name";
+
+        $stmt = $con->prepare($sql);
+        $stmt->execute(array(':id' => $user->getId()));
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     });
 
     $app->post(function($request) use($app, $user) {
