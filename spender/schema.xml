@@ -37,7 +37,7 @@
     </table>
     <table name="expense" phpName="Expense">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
-        <column name="amount" type="float" required="true"/>
+        <column name="amount" type="decimal" size="24" scale="4" required="true"/>
         <column name="comment" type="varchar" size="2048"/>
         <column name="user_id" type="integer" required="true"/>
         <column name="category_id" type="integer" required="true"/>
@@ -55,7 +55,7 @@
     </table>
     <table name="income" phpName="Income">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
-        <column name="amount" type="float" required="true"/>
+        <column name="amount" type="decimal" size="24" scale="4" required="true"/>
         <column name="comment" type="varchar" size="2048"/>
         <column name="user_id" type="integer" required="true"/>
         <column name="income_category_id" type="integer" required="true"/>
