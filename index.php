@@ -2,7 +2,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/spender/generated-conf/config.php';
 
-header('Access-Control-Allow-Origin: http://spender.pereborstudio.dev:8081');
+header('Access-Control-Allow-Origin: http://spender.pereborstudio.com');
 header('Access-Control-Allow-Headers: X-Auth-Token, Content-Type');
 header('Access-Control-Allow-Methods: POST,GET,HEAD,OPTIONS,DELETE,PATCH,PUT');
 define('GAPI_CLIENT_ID', '843225840486-ilkj47kggue9tvh6ajfvvog45mertgfg.apps.googleusercontent.com');
