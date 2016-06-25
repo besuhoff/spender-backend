@@ -49,10 +49,10 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 
         $paymentMethods = PaymentMethodQuery::create()
             ->clearSelectColumns()
-            ->addAsColumn('Expenses', 'expenses.sum')
-            ->addAsColumn('Incomes', 'incomes.sum');
+            ->addAsColumn('expenses', 'expenses.sum')
+            ->addAsColumn('incomes', 'incomes.sum');
 
-        $phpFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_PHPNAME);
+        $phpFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_CAMELNAME);
         $sqlFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_FIELDNAME);
 
         $tableName = \Map\PaymentMethodTableMap::TABLE_NAME;
@@ -76,22 +76,22 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 
     $app->post(function($request) use($app, $user) {
         $paymentMethod = new PaymentMethod();
-        $paymentMethod->setName($request->Name);
-        $paymentMethod->setCurrency($request->Currency);
+        $paymentMethod->setName($request->name);
+        $paymentMethod->setCurrency($request->currency);
         $user->addPaymentMethod($paymentMethod);
         $user->save();
 
-        return $paymentMethod->toArray();
+        return $paymentMethod->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->param('int', function($request, $paymentMethodId) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $paymentMethodId) {
             $paymentMethod = PaymentMethodQuery::create()->findOneById($paymentMethodId);
-            $paymentMethod->setName($request->Name);
-            $paymentMethod->setCurrency($request->Currency);
+            $paymentMethod->setName($request->name);
+            $paymentMethod->setCurrency($request->currency);
             $paymentMethod->save();
 
-            return $paymentMethod->toArray();
+            return $paymentMethod->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $paymentMethodId) {
@@ -106,25 +106,25 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 $app->path('/categories', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $categories = CategoryQuery::create()->orderByName()->findByUserId($user->getId());
-        return $categories->toArray();
+        return $categories->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->post(function($request) use($app, $user) {
         $category = new Category();
-        $category->setName($request->Name);
+        $category->setName($request->name);
         $user->addCategory($category);
         $user->save();
 
-        return $category->toArray();
+        return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->param('int', function($request, $categoryId) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $categoryId) {
             $category = CategoryQuery::create()->findOneById($categoryId);
-            $category->setName($request->Name);
+            $category->setName($request->name);
             $category->save();
 
-            return $category->toArray();
+            return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $categoryId) {
@@ -139,25 +139,25 @@ $app->path('/categories', function($request) use($app, $user) {
 $app->path('/income-categories', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $incomeCategories = IncomeCategoryQuery::create()->orderByName()->findByUserId($user->getId());
-        return $incomeCategories->toArray();
+        return $incomeCategories->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->post(function($request) use($app, $user) {
         $category = new IncomeCategory();
-        $category->setName($request->Name);
+        $category->setName($request->name);
         $user->addIncomeCategory($category);
         $user->save();
 
-        return $category->toArray();
+        return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->param('int', function($request, $categoryId) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $categoryId) {
             $category = IncomeCategoryQuery::create()->findOneById($categoryId);
-            $category->setName($request->Name);
+            $category->setName($request->name);
             $category->save();
 
-            return $category->toArray();
+            return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $categoryId) {
@@ -172,28 +172,28 @@ $app->path('/income-categories', function($request) use($app, $user) {
 $app->path('/expenses', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $expense = new Expense();
-        $expense->setAmount($request->Amount);
-        $expense->setCategoryId($request->CategoryId);
-        $expense->setPaymentMethodId($request->PaymentMethodId);
-        $expense->setComment($request->Comment);
+        $expense->setAmount($request->amount);
+        $expense->setCategoryId($request->categoryId);
+        $expense->setPaymentMethodId($request->paymentMethodId);
+        $expense->setComment($request->comment);
         $user->addExpense($expense);
         $user->save();
 
-        return $expense->toArray();
+        return $expense->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 });
 
 $app->path('/incomes', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $income = new Income();
-        $income->setAmount($request->Amount);
-        $income->setIncomeCategoryId($request->IncomeCategoryId);
-        $income->setPaymentMethodId($request->PaymentMethodId);
-        $income->setComment($request->Comment);
+        $income->setAmount($request->amount);
+        $income->setIncomeCategoryId($request->incomeCategoryId);
+        $income->setPaymentMethodId($request->paymentMethodId);
+        $income->setComment($request->comment);
         $user->addIncome($income);
         $user->save();
 
-        return $income->toArray();
+        return $income->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 });
 

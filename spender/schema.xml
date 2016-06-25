@@ -15,6 +15,7 @@
             <reference local="user_id" foreign="id"/>
         </foreign-key>
         <behavior name="timestampable" />
+        <behavior name="archivable" />
     </table>
     <table name="income_category" phpName="IncomeCategory">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
@@ -24,6 +25,7 @@
             <reference local="user_id" foreign="id"/>
         </foreign-key>
         <behavior name="timestampable" />
+        <behavior name="archivable" />
     </table>
     <table name="payment_method" phpName="PaymentMethod">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
@@ -34,6 +36,7 @@
             <reference local="user_id" foreign="id"/>
         </foreign-key>
         <behavior name="timestampable" />
+        <behavior name="archivable" />
     </table>
     <table name="expense" phpName="Expense">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
@@ -52,6 +55,7 @@
             <reference local="payment_method_id" foreign="id"/>
         </foreign-key>
         <behavior name="timestampable" />
+        <behavior name="archivable" />
     </table>
     <table name="income" phpName="Income">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
@@ -70,5 +74,6 @@
             <reference local="payment_method_id" foreign="id"/>
         </foreign-key>
         <behavior name="timestampable" />
+        <behavior name="archivable" />
     </table>
 </database>
