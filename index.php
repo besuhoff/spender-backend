@@ -82,7 +82,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
         $user->addPaymentMethod($paymentMethod);
         $user->save();
 
-        return $paymentMethod->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        return $paymentMethod->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->param('int', function($request, $paymentMethodId) use($app, $user) {
@@ -92,7 +92,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
             $paymentMethod->setCurrency($request->currency);
             $paymentMethod->save();
 
-            return $paymentMethod->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+            return $paymentMethod->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $paymentMethodId) {
@@ -116,7 +116,7 @@ $app->path('/categories', function($request) use($app, $user) {
         $user->addCategory($category);
         $user->save();
 
-        return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        return $category->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->param('int', function($request, $categoryId) use($app, $user) {
@@ -125,7 +125,7 @@ $app->path('/categories', function($request) use($app, $user) {
             $category->setName($request->name);
             $category->save();
 
-            return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+            return $category->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $categoryId) {
@@ -149,7 +149,7 @@ $app->path('/income-categories', function($request) use($app, $user) {
         $user->addIncomeCategory($category);
         $user->save();
 
-        return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        return $category->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->param('int', function($request, $categoryId) use($app, $user) {
@@ -158,7 +158,7 @@ $app->path('/income-categories', function($request) use($app, $user) {
             $category->setName($request->name);
             $category->save();
 
-            return $category->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+            return $category->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $categoryId) {
@@ -194,7 +194,7 @@ $app->path('/expenses', function($request) use($app, $user) {
         $user->addExpense($expense);
         $user->save();
 
-        return $expense->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        return $expense->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 });
 
@@ -210,7 +210,7 @@ $app->path('/incomes', function($request) use($app, $user) {
         $user->addIncome($income);
         $user->save();
 
-        return $income->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        return $income->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 });
 
