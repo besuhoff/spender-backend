@@ -62,9 +62,10 @@ $app->path('/payment-methods', function($request) use($app, $user) {
         }
 
         $con = \Propel\Runtime\Propel::getWriteConnection(\Map\PaymentMethodTableMap::DATABASE_NAME);
-        $sql = "{$paymentMethods->createSelectSql()} $tableName
-            LEFT OUTER JOIN ({$expenses->createSelectSql()}) AS expenses ON expenses.payment_method_id = {$tableName}.id
-            LEFT OUTER JOIN ({$incomes->createSelectSql()}) AS incomes ON incomes.payment_method_id = {$tableName}.id
+        $params = array();
+        $sql = "{$paymentMethods->createSelectSql($params)} $tableName
+            LEFT OUTER JOIN ({$expenses->createSelectSql($params)}) AS expenses ON expenses.payment_method_id = {$tableName}.id
+            LEFT OUTER JOIN ({$incomes->createSelectSql($params)}) AS incomes ON incomes.payment_method_id = {$tableName}.id
             WHERE payment_method.user_id = :id
             ORDER BY {$tableName}.name";
 
@@ -173,7 +174,21 @@ $app->path('/expenses', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $expense = new Expense();
         $expense->setAmount($request->amount);
-        $expense->setCategoryId($request->categoryId);
+        $isValid = false;
+        if ($request->categoryId) {
+            $expense->setCategoryId($request->categoryId);
+            $isValid = true;
+        } elseif ($request->targetIncomeId) {
+            $targetIncome = IncomeQuery::create()->findOneById($request->targetIncomeId);
+            if ($targetIncome && $targetIncome->getUser()->getId() === $user->getId()) {
+                $isValid = true;
+                $expense->setTargetIncomeId($targetIncome->getId());
+            }
+        }
+        if (!$isValid) {
+            return $app->response(422);
+        }
+
         $expense->setPaymentMethodId($request->paymentMethodId);
         $expense->setComment($request->comment);
         $user->addExpense($expense);
@@ -187,7 +202,9 @@ $app->path('/incomes', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $income = new Income();
         $income->setAmount($request->amount);
-        $income->setIncomeCategoryId($request->incomeCategoryId);
+        if ($request->incomeCategoryId) {
+            $income->setIncomeCategoryId($request->incomeCategoryId);
+        }
         $income->setPaymentMethodId($request->paymentMethodId);
         $income->setComment($request->comment);
         $user->addIncome($income);

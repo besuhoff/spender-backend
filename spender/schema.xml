@@ -43,8 +43,9 @@
         <column name="amount" type="decimal" size="24" scale="4" required="true"/>
         <column name="comment" type="varchar" size="2048"/>
         <column name="user_id" type="integer" required="true"/>
-        <column name="category_id" type="integer" required="true"/>
+        <column name="category_id" type="integer"/>
         <column name="payment_method_id" type="integer" required="true"/>
+        <column name="target_income_id" type="integer"/>
         <foreign-key foreignTable="user">
             <reference local="user_id" foreign="id"/>
         </foreign-key>
@@ -54,6 +55,9 @@
         <foreign-key foreignTable="payment_method">
             <reference local="payment_method_id" foreign="id"/>
         </foreign-key>
+        <foreign-key foreignTable="income">
+            <reference local="target_income_id" foreign="id"/>
+        </foreign-key>
         <behavior name="timestampable" />
         <behavior name="archivable" />
     </table>
@@ -62,7 +66,7 @@
         <column name="amount" type="decimal" size="24" scale="4" required="true"/>
         <column name="comment" type="varchar" size="2048"/>
         <column name="user_id" type="integer" required="true"/>
-        <column name="income_category_id" type="integer" required="true"/>
+        <column name="income_category_id" type="integer"/>
         <column name="payment_method_id" type="integer" required="true"/>
         <foreign-key foreignTable="user">
             <reference local="user_id" foreign="id"/>
