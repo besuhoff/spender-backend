@@ -189,6 +189,9 @@ $app->path('/expenses', function($request) use($app, $user) {
             return $app->response(422);
         }
 
+        if ($request->createdAt) {
+            $expense->setCreatedAt($request->createdAt);
+        }
         $expense->setPaymentMethodId($request->paymentMethodId);
         $expense->setComment($request->comment);
         $user->addExpense($expense);
@@ -204,6 +207,9 @@ $app->path('/incomes', function($request) use($app, $user) {
         $income->setAmount($request->amount);
         if ($request->incomeCategoryId) {
             $income->setIncomeCategoryId($request->incomeCategoryId);
+        }
+        if ($request->createdAt) {
+            $income->setCreatedAt($request->createdAt);
         }
         $income->setPaymentMethodId($request->paymentMethodId);
         $income->setComment($request->comment);
