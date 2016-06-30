@@ -2,7 +2,12 @@
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/spender/generated-conf/config.php';
 
-header('Access-Control-Allow-Origin: http://spender.pereborstudio.com');
+if (in_array($_SERVER['HTTP_ORIGIN'], ['http://spender.pereborstudio.com', 'http://spender.pereborstudio.dev:8081'])) {
+    header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+} else {
+    exit(0);
+}
+
 header('Access-Control-Allow-Headers: X-Auth-Token, Content-Type');
 header('Access-Control-Allow-Methods: POST,GET,HEAD,OPTIONS,DELETE,PATCH,PUT');
 define('GAPI_CLIENT_ID', '843225840486-ilkj47kggue9tvh6ajfvvog45mertgfg.apps.googleusercontent.com');
@@ -171,6 +176,14 @@ $app->path('/income-categories', function($request) use($app, $user) {
 });
 
 $app->path('/expenses', function($request) use($app, $user) {
+    $app->get(function($request) use($app, $user) {
+        $expenses = ExpenseQuery::create()
+            ->orderByCreatedAt()
+            ->joinWithPaymentMethod()
+            ->findByUserId($user->getId());
+        return $expenses->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+    });
+
     $app->post(function($request) use($app, $user) {
         $expense = new Expense();
         $expense->setAmount($request->amount);
@@ -202,6 +215,14 @@ $app->path('/expenses', function($request) use($app, $user) {
 });
 
 $app->path('/incomes', function($request) use($app, $user) {
+    $app->get(function($request) use($app, $user) {
+        $incomes = IncomeQuery::create()
+            ->orderByCreatedAt()
+            ->joinWithPaymentMethod()
+            ->findByUserId($user->getId());
+        return $incomes->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+    });
+
     $app->post(function($request) use($app, $user) {
         $income = new Income();
         $income->setAmount($request->amount);
