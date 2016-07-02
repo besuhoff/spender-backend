@@ -179,7 +179,11 @@ $app->path('/expenses', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $expenses = ExpenseQuery::create()
             ->orderByCreatedAt()
-            ->joinWithPaymentMethod()
+            ->leftJoinPaymentMethod()
+            ->withColumn('PaymentMethod.Name', 'paymentMethodName')
+            ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
+            ->leftJoinCategory()
+            ->withColumn('Category.Name', 'categoryName')
             ->findByUserId($user->getId());
         return $expenses->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
@@ -218,7 +222,11 @@ $app->path('/incomes', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $incomes = IncomeQuery::create()
             ->orderByCreatedAt()
-            ->joinWithPaymentMethod()
+            ->leftJoinPaymentMethod()
+            ->withColumn('PaymentMethod.Name', 'paymentMethodName')
+            ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
+            ->leftJoinIncomeCategory()
+            ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
             ->findByUserId($user->getId());
         return $incomes->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
