@@ -184,8 +184,26 @@ $app->path('/expenses', function($request) use($app, $user) {
             ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
             ->leftJoinCategory()
             ->withColumn('Category.Name', 'categoryName')
-            ->findByUserId($user->getId());
-        return $expenses->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+            ->findByUserId($user->getId())
+            ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+
+        foreach($expenses as $index => $expense) {
+            if ($expense['paymentMethodName'] === null) {
+                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($expense['paymentMethodId']);
+                if ($paymentMethod) {
+                    $expenses[$index]['paymentMethodName'] = $paymentMethod->getName();
+                    $expenses[$index]['paymentMethodCurrency'] = $paymentMethod->getCurrency();
+                }
+            }
+
+            if ($expense['categoryName'] === null) {
+                $category = CategoryArchiveQuery::create()->findOneById($expense['categoryId']);
+                if ($category) {
+                    $expenses[$index]['categoryName'] = $category->getName();
+                }
+            }
+        }
+        return $expenses;
     });
 
     $app->post(function($request) use($app, $user) {
@@ -227,8 +245,28 @@ $app->path('/incomes', function($request) use($app, $user) {
             ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
             ->leftJoinIncomeCategory()
             ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
-            ->findByUserId($user->getId());
-        return $incomes->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+            ->findByUserId($user->getId())
+            ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+
+        foreach($incomes as $index => $income) {
+            if ($income['paymentMethodName'] === null) {
+                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($income['paymentMethodId']);
+
+                if ($paymentMethod) {
+                    $incomes[$index]['paymentMethodName'] = $paymentMethod->getName();
+                    $incomes[$index]['paymentMethodCurrency'] = $paymentMethod->getCurrency();
+                }
+            }
+
+            if ($income['incomeCategoryName'] === null) {
+                $category = IncomeCategoryArchiveQuery::create()->findOneById($income['incomeCategoryId']);
+
+                if ($category) {
+                    $incomes[$index]['incomeCategoryName'] = $category->getName();
+                }
+            }
+        }
+        return $incomes;
     });
 
     $app->post(function($request) use($app, $user) {
