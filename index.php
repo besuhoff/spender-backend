@@ -83,6 +83,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $paymentMethod = new PaymentMethod();
         $paymentMethod->setName($request->name);
+        $paymentMethod->setColor($request->color);
         $paymentMethod->setCurrency($request->currency);
         $user->addPaymentMethod($paymentMethod);
         $user->save();
@@ -94,6 +95,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $paymentMethodId) {
             $paymentMethod = PaymentMethodQuery::create()->findOneById($paymentMethodId);
             $paymentMethod->setName($request->name);
+            $paymentMethod->setColor($request->color);
             $paymentMethod->setCurrency($request->currency);
             $paymentMethod->save();
 
@@ -118,6 +120,7 @@ $app->path('/categories', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $category = new Category();
         $category->setName($request->name);
+        $category->setColor($request->color);
         $user->addCategory($category);
         $user->save();
 
@@ -128,6 +131,7 @@ $app->path('/categories', function($request) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $categoryId) {
             $category = CategoryQuery::create()->findOneById($categoryId);
             $category->setName($request->name);
+            $category->setColor($request->color);
             $category->save();
 
             return $category->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
@@ -151,6 +155,7 @@ $app->path('/income-categories', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $category = new IncomeCategory();
         $category->setName($request->name);
+        $category->setColor($request->color);
         $user->addIncomeCategory($category);
         $user->save();
 
@@ -161,6 +166,7 @@ $app->path('/income-categories', function($request) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $categoryId) {
             $category = IncomeCategoryQuery::create()->findOneById($categoryId);
             $category->setName($request->name);
+            $category->setColor($request->color);
             $category->save();
 
             return $category->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
@@ -181,9 +187,11 @@ $app->path('/expenses', function($request) use($app, $user) {
             ->orderByCreatedAt()
             ->leftJoinPaymentMethod()
             ->withColumn('PaymentMethod.Name', 'paymentMethodName')
+            ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
             ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
             ->leftJoinCategory()
             ->withColumn('Category.Name', 'categoryName')
+            ->withColumn('Category.Color', 'categoryColor')
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
@@ -192,6 +200,7 @@ $app->path('/expenses', function($request) use($app, $user) {
                 $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($expense['paymentMethodId']);
                 if ($paymentMethod) {
                     $expenses[$index]['paymentMethodName'] = $paymentMethod->getName();
+                    $expenses[$index]['paymentMethodColor'] = $paymentMethod->getColor();
                     $expenses[$index]['paymentMethodCurrency'] = $paymentMethod->getCurrency();
                 }
             }
@@ -200,6 +209,7 @@ $app->path('/expenses', function($request) use($app, $user) {
                 $category = CategoryArchiveQuery::create()->findOneById($expense['categoryId']);
                 if ($category) {
                     $expenses[$index]['categoryName'] = $category->getName();
+                    $expenses[$index]['categoryColor'] = $category->getColor();
                 }
             }
         }
@@ -242,9 +252,11 @@ $app->path('/incomes', function($request) use($app, $user) {
             ->orderByCreatedAt()
             ->leftJoinPaymentMethod()
             ->withColumn('PaymentMethod.Name', 'paymentMethodName')
+            ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
             ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
             ->leftJoinIncomeCategory()
             ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
+            ->withColumn('IncomeCategory.Color', 'incomeCategoryColor')
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
@@ -254,6 +266,7 @@ $app->path('/incomes', function($request) use($app, $user) {
 
                 if ($paymentMethod) {
                     $incomes[$index]['paymentMethodName'] = $paymentMethod->getName();
+                    $incomes[$index]['paymentMethodColor'] = $paymentMethod->getColor();
                     $incomes[$index]['paymentMethodCurrency'] = $paymentMethod->getCurrency();
                 }
             }
@@ -263,6 +276,7 @@ $app->path('/incomes', function($request) use($app, $user) {
 
                 if ($category) {
                     $incomes[$index]['incomeCategoryName'] = $category->getName();
+                    $incomes[$index]['incomeCategoryColor'] = $category->getColor();
                 }
             }
         }

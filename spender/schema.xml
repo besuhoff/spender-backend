@@ -10,6 +10,7 @@
     <table name="category" phpName="Category">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
+        <column name="color" type="varchar" size="9" />
         <column name="user_id" type="integer" required="true"/>
         <foreign-key foreignTable="user">
             <reference local="user_id" foreign="id"/>
@@ -20,6 +21,7 @@
     <table name="income_category" phpName="IncomeCategory">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
+        <column name="color" type="varchar" size="9" />
         <column name="user_id" type="integer" required="true"/>
         <foreign-key foreignTable="user">
             <reference local="user_id" foreign="id"/>
@@ -30,6 +32,7 @@
     <table name="payment_method" phpName="PaymentMethod">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
+        <column name="color" type="varchar" size="9" />
         <column name="currency" type="varchar" size="24" required="true" />
         <column name="user_id" type="integer" required="true"/>
         <foreign-key foreignTable="user">
