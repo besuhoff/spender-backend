@@ -1,4 +1,9 @@
 {
+  "name": "spender",
+  "version": "0.1.0",
+  "description": "Spender: Funds Management Made Easy",
+  "author": "Sergiy Pereverziev <albert.besuhoff@gmail.com>",
+  "homepage": "http://spender.pereborstudio.com",
   "devDependencies": {
     "sng": "0.2.1"
   },
