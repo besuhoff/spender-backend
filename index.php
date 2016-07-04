@@ -2,7 +2,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/spender/generated-conf/config.php';
 
-if (in_array($_SERVER['HTTP_ORIGIN'], ['http://spender.pereborstudio.com', 'http://spender.pereborstudio.dev:8081'])) {
+if (in_array($_SERVER['HTTP_ORIGIN'], ['https://spender.pereborstudio.com', 'http://spender.pereborstudio.dev:8081'])) {
     header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
 } else {
     exit(0);
