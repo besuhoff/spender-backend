@@ -235,7 +235,8 @@ $app->path('/expenses', function($request) use($app, $user) {
         }
 
         if ($request->createdAt) {
-            $expense->setCreatedAt($request->createdAt);
+            $d = new DateTime($request->createdAt);
+            $expense->setCreatedAt($d->getTimestamp());
         }
         $expense->setPaymentMethodId($request->paymentMethodId);
         $expense->setComment($request->comment);
@@ -290,7 +291,8 @@ $app->path('/incomes', function($request) use($app, $user) {
             $income->setIncomeCategoryId($request->incomeCategoryId);
         }
         if ($request->createdAt) {
-            $income->setCreatedAt($request->createdAt);
+            $d = new DateTime($request->createdAt);
+            $income->setCreatedAt($d->getTimestamp());
         }
         $income->setPaymentMethodId($request->paymentMethodId);
         $income->setComment($request->comment);
