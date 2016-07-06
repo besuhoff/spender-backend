@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../spender/generated-conf/config.php';
+require_once  __DIR__ . '/../vendor/paragonie/random_compat/lib/random.php';
+define('USER_KEYS_DIR', __DIR__ . '/../user-keys');
 
 if (in_array($_SERVER['HTTP_ORIGIN'], ['https://spender.pereborstudio.com', 'http://spender.pereborstudio.dev:8081'])) {
     header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
@@ -14,6 +16,28 @@ define('GAPI_CLIENT_ID', '843225840486-ilkj47kggue9tvh6ajfvvog45mertgfg.apps.goo
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
+}
+
+/**
+ * Generate a random string, using a cryptographically secure
+ * pseudorandom number generator (random_int)
+ *
+ * For PHP 7, random_int is a PHP core function
+ * For PHP 5.x, depends on https://github.com/paragonie/random_compat
+ *
+ * @param int $length      How many characters do we want?
+ * @param string $keyspace A string of all possible characters
+ *                         to select from
+ * @return string
+ */
+function random_str($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+{
+    $str = '';
+    $max = mb_strlen($keyspace, '8bit') - 1;
+    for ($i = 0; $i < $length; ++$i) {
+        $str .= $keyspace[random_int(0, $max)];
+    }
+    return $str;
 }
 
 $gapiUserId = false;
@@ -35,7 +59,11 @@ if ($token) {
             $user->setEmail($gapiResponse->email);
             $user->setName($gapiResponse->name);
             $user->save();
+
+            file_put_contents(USER_KEYS_DIR . '/' . $gapiUserId, random_str(random_int(90, 128)));
         }
+
+        $encryptionKey = file_get_contents(USER_KEYS_DIR . '/' . $gapiUserId);
     }
 }
 
