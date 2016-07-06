@@ -63,7 +63,9 @@ if ($token) {
             file_put_contents(USER_KEYS_DIR . '/' . $gapiUserId, random_str(random_int(90, 128)));
         }
 
-        $encryptionKey = file_get_contents(USER_KEYS_DIR . '/' . $gapiUserId);
+        if (file_exists(USER_KEYS_DIR . '/' . $gapiUserId)) {
+            $encryptionKey = file_get_contents(USER_KEYS_DIR . '/' . $gapiUserId);
+        }
     }
 }
 
