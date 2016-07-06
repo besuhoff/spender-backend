@@ -32,6 +32,8 @@ if ($token) {
         if (!$user) {
             $user = new User();
             $user->setGapiUserId($gapiUserId);
+            $user->setEmail($gapiResponse->email);
+            $user->setName($gapiResponse->name);
             $user->save();
         }
     }
