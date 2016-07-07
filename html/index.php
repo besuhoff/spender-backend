@@ -290,6 +290,10 @@ $app->path('/incomes', function($request) use($app, $user) {
             ->leftJoinIncomeCategory()
             ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
             ->withColumn('IncomeCategory.Color', 'incomeCategoryColor')
+            ->leftJoinExpense()
+            ->leftJoin('Expense.PaymentMethod ExpensePaymentMethod')
+            ->withColumn('ExpensePaymentMethod.Currency', 'sourceExpensePaymentMethodCurrency')
+            ->withColumn('ExpensePaymentMethod.Id', 'sourceExpensePaymentMethodId')
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
