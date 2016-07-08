@@ -84,23 +84,11 @@ $app->path('/payment-methods', function($request) use($app, $user) {
             ->groupByPaymentMethodId()
             ->withColumn('SUM(amount)', 'sum');
 
-        $paymentMethods = PaymentMethodQuery::create()
-            ->clearSelectColumns()
-            ->addAsColumn('expenses', 'expenses.sum')
-            ->addAsColumn('incomes', 'incomes.sum');
-
-        $phpFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_CAMELNAME);
-        $sqlFieldNames = \Map\PaymentMethodTableMap::getFieldNames(\Map\PaymentMethodTableMap::TYPE_FIELDNAME);
-
         $tableName = \Map\PaymentMethodTableMap::TABLE_NAME;
-
-        foreach($phpFieldNames as $index => $fieldName) {
-            $paymentMethods->addAsColumn($fieldName, $tableName . '.' . $sqlFieldNames[$index]);
-        }
 
         $con = \Propel\Runtime\Propel::getWriteConnection(\Map\PaymentMethodTableMap::DATABASE_NAME);
         $params = array();
-        $sql = "{$paymentMethods->createSelectSql($params)} $tableName
+        $sql = "SELECT {$tableName}.*, expenses.sum as expenses, incomes.sum as incomes FROM $tableName
             LEFT OUTER JOIN ({$expenses->createSelectSql($params)}) AS expenses ON expenses.payment_method_id = {$tableName}.id
             LEFT OUTER JOIN ({$incomes->createSelectSql($params)}) AS incomes ON incomes.payment_method_id = {$tableName}.id
             WHERE payment_method.user_id = :id
@@ -109,7 +97,14 @@ $app->path('/payment-methods', function($request) use($app, $user) {
         $stmt = $con->prepare($sql);
         $stmt->execute(array(':id' => $user->getId()));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $formatter = new \Propel\Runtime\Formatter\ObjectFormatter();
+        $formatter->setClass('\PaymentMethod');
+
+        $formatter->setAsColumns(['expenses' => 'expenses', 'incomes' => 'incomes']);
+
+        $objects = $formatter->format($con->getDataFetcher($stmt));
+
+        return $objects->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
     });
 
     $app->post(function($request) use($app, $user) {
