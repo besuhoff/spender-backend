@@ -282,19 +282,26 @@ $app->path('/incomes', function($request) use($app, $user) {
             ->withColumn('PaymentMethod.Name', 'paymentMethodName')
             ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
             ->withColumn('PaymentMethod.Currency', 'paymentMethodCurrency')
+
             ->leftJoinIncomeCategory()
             ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
             ->withColumn('IncomeCategory.Color', 'incomeCategoryColor')
+
             ->leftJoinExpense()
+            ->withColumn('Expense.Id', 'sourceExpenseId')
+            ->withColumn('Expense.Amount', 'sourceExpenseAmount')
+            ->withColumn('Expense.PaymentMethodId', 'sourceExpensePaymentMethodId')
+
             ->leftJoin('Expense.PaymentMethod ExpensePaymentMethod')
             ->withColumn('ExpensePaymentMethod.Currency', 'sourceExpensePaymentMethodCurrency')
-            ->withColumn('ExpensePaymentMethod.Id', 'sourceExpensePaymentMethodId')
+            ->withColumn('ExpensePaymentMethod.Name', 'sourceExpensePaymentMethodName')
+
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
         foreach($incomes as $index => $income) {
-            if ($income['paymentMethodName'] === null) {
-                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($income['paymentMethodId']);
+            if ($incomes[$index]['paymentMethodName'] === null) {
+                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($incomes[$index]['paymentMethodId']);
 
                 if ($paymentMethod) {
                     $incomes[$index]['paymentMethodName'] = $paymentMethod->getName();
@@ -303,8 +310,26 @@ $app->path('/incomes', function($request) use($app, $user) {
                 }
             }
 
-            if ($income['incomeCategoryName'] === null) {
-                $category = IncomeCategoryArchiveQuery::create()->findOneById($income['incomeCategoryId']);
+            if ($incomes[$index]['sourceExpenseId'] && $incomes[$index]['sourceExpenseAmount'] === null) {
+                $expense = ExpenseArchiveQuery::create()->findOneById($incomes[$index]['sourceExpenseId']);
+
+                if ($expense) {
+                    $incomes[$index]['sourceExpenseAmount'] = $expense->getAmount();
+                    $incomes[$index]['sourceExpensePaymentMethodId'] = $expense->getPaymentMethodId();
+                }
+            }
+
+            if ($incomes[$index]['sourceExpensePaymentMethodId'] && $incomes[$index]['sourceExpensePaymentMethodName'] === null) {
+                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($incomes[$index]['sourceExpensePaymentMethodId']);
+
+                if ($paymentMethod) {
+                    $incomes[$index]['sourceExpensePaymentMethodCurrency'] = $paymentMethod->getCurrency();
+                    $incomes[$index]['sourceExpensePaymentMethodName'] = $paymentMethod->getName();
+                }
+            }
+
+            if ($incomes[$index]['incomeCategoryName'] === null) {
+                $category = IncomeCategoryArchiveQuery::create()->findOneById($incomes[$index]['incomeCategoryId']);
 
                 if ($category) {
                     $incomes[$index]['incomeCategoryName'] = $category->getName();
