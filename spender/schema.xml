@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="spender" defaultIdMethod="native">
+    <table name="currency" phpName="Currency">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="symbol" type="varchar" size="12" required="true"/>
+        <column name="symbol_native" type="varchar" size="12" required="true"/>
+        <column name="decimal_digits" type="integer" required="true"/>
+        <column name="rounding" type="integer" required="true"/>
+        <column name="code" type="varchar" size="12" required="true"/>
+        <behavior name="timestampable" />
+    </table>
     <table name="user" phpName="User">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="gapi_user_id" type="varchar" size="255" required="true"/>
@@ -33,10 +42,14 @@
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
         <column name="color" type="varchar" size="9" />
-        <column name="currency" type="varchar" size="24" required="true" />
+        <column name="currency_pseudo" type="varchar" size="255" />
+        <column name="currency_id" type="integer" required="true" />
         <column name="user_id" type="integer" required="true"/>
         <foreign-key foreignTable="user">
             <reference local="user_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="currency">
+            <reference local="currency_id" foreign="id"/>
         </foreign-key>
         <behavior name="timestampable" />
         <behavior name="archivable" />
