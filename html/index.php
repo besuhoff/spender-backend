@@ -88,7 +88,19 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 
         $con = \Propel\Runtime\Propel::getWriteConnection(\Map\PaymentMethodTableMap::DATABASE_NAME);
         $params = array();
-        $sql = "SELECT {$tableName}.*, currency.code as currencyCode, currency.symbol as currencySymbol, expenses.sum as expenses, incomes.sum as incomes FROM $tableName
+        $sql = "SELECT
+                {$tableName}.id as Id,
+                {$tableName}.name as `Name`,
+                {$tableName}.color as Color,
+                {$tableName}.currency_id as CurrencyId,
+                {$tableName}.user_id as UserId,
+                {$tableName}.created_at as CreatedAt,
+                {$tableName}.updated_at as UpdatedAt,
+                currency.code as currencyCode,
+                currency.symbol as currencySymbol,
+                expenses.sum as expenses,
+                incomes.sum as incomes
+            FROM $tableName
             INNER JOIN currency ON currency.id = $tableName.currency_id
             LEFT OUTER JOIN ({$expenses->createSelectSql($params)}) AS expenses ON expenses.payment_method_id = {$tableName}.id
             LEFT OUTER JOIN ({$incomes->createSelectSql($params)}) AS incomes ON incomes.payment_method_id = {$tableName}.id
@@ -118,7 +130,6 @@ $app->path('/payment-methods', function($request) use($app, $user) {
         $paymentMethod->setName($request->name);
         $paymentMethod->setColor($request->color);
         $paymentMethod->setCurrencyId($request->currencyId);
-        $paymentMethod->setCurrencyPseudo($request->currencyPseudo);
         $user->addPaymentMethod($paymentMethod);
         $user->save();
 
@@ -131,7 +142,6 @@ $app->path('/payment-methods', function($request) use($app, $user) {
             $paymentMethod->setName($request->name);
             $paymentMethod->setColor($request->color);
             $paymentMethod->setCurrencyId($request->currencyId);
-            $paymentMethod->setCurrencyPseudo($request->currencyPseudo);
             $paymentMethod->save();
 
             return $paymentMethod->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
@@ -224,12 +234,15 @@ $app->path('/expenses', function($request) use($app, $user) {
             ->withColumn('PaymentMethod.Name', 'paymentMethodName')
             ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
             ->withColumn('PaymentMethod.CurrencyId', 'paymentMethodCurrencyId')
-            ->withColumn('PaymentMethod.CurrencyPseudo', 'paymentMethodCurrencyPseudo')
+
             ->leftJoin('PaymentMethod.Currency PaymentMethodCurrency')
             ->withColumn('PaymentMethodCurrency.Code', 'paymentMethodCurrencyCode')
+            ->withColumn('PaymentMethodCurrency.Symbol', 'paymentMethodCurrencySymbol')
+
             ->leftJoinCategory()
             ->withColumn('Category.Name', 'categoryName')
             ->withColumn('Category.Color', 'categoryColor')
+
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
@@ -240,10 +253,10 @@ $app->path('/expenses', function($request) use($app, $user) {
                     $expenses[$index]['paymentMethodName'] = $paymentMethod->getName();
                     $expenses[$index]['paymentMethodColor'] = $paymentMethod->getColor();
                     $expenses[$index]['paymentMethodCurrencyId'] = $paymentMethod->getCurrencyId();
-                    $expenses[$index]['paymentMethodCurrencyPseudo'] = $paymentMethod->getCurrencyPseudo();
 
                     $currency = CurrencyQuery::create()->findOneById($paymentMethod->getCurrencyId());
                     $expenses[$index]['paymentMethodCurrencyCode'] = $currency->getCode();
+                    $expenses[$index]['paymentMethodCurrencySymbol'] = $currency->getSymbol();
                 }
             }
 
@@ -297,10 +310,10 @@ $app->path('/incomes', function($request) use($app, $user) {
             ->withColumn('PaymentMethod.Name', 'paymentMethodName')
             ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
             ->withColumn('PaymentMethod.CurrencyId', 'paymentMethodCurrencyId')
-            ->withColumn('PaymentMethod.CurrencyPseudo', 'paymentMethodCurrencyPseudo')
 
             ->leftJoin('PaymentMethod.Currency PaymentMethodCurrency')
             ->withColumn('PaymentMethodCurrency.Code', 'paymentMethodCurrencyCode')
+            ->withColumn('PaymentMethodCurrency.Symbol', 'paymentMethodCurrencySymbol')
 
             ->leftJoinIncomeCategory()
             ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
@@ -313,11 +326,11 @@ $app->path('/incomes', function($request) use($app, $user) {
 
             ->leftJoin('Expense.PaymentMethod ExpensePaymentMethod')
             ->withColumn('ExpensePaymentMethod.CurrencyId', 'sourceExpensePaymentMethodCurrencyId')
-            ->withColumn('ExpensePaymentMethod.CurrencyPseudo', 'sourceExpensePaymentMethodCurrencyPseudo')
             ->withColumn('ExpensePaymentMethod.Name', 'sourceExpensePaymentMethodName')
 
-            ->leftJoin('Expense.PaymentMethod.Currency ExpensePaymentMethodCurrency')
+            ->leftJoin('ExpensePaymentMethod.Currency ExpensePaymentMethodCurrency')
             ->withColumn('ExpensePaymentMethodCurrency.Code', 'sourceExpensePaymentMethodCurrencyCode')
+            ->withColumn('ExpensePaymentMethodCurrency.Symbol', 'sourceExpensePaymentMethodCurrencySymbol')
 
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
@@ -330,10 +343,10 @@ $app->path('/incomes', function($request) use($app, $user) {
                     $incomes[$index]['paymentMethodName'] = $paymentMethod->getName();
                     $incomes[$index]['paymentMethodColor'] = $paymentMethod->getColor();
                     $incomes[$index]['paymentMethodCurrencyId'] = $paymentMethod->getCurrencyId();
-                    $incomes[$index]['paymentMethodCurrencyPseudo'] = $paymentMethod->getCurrencyPseudo();
 
                     $currency = CurrencyQuery::create()->findOneById($paymentMethod->getCurrencyId());
                     $incomes[$index]['paymentMethodCurrencyCode'] = $currency->getCode();
+                    $incomes[$index]['paymentMethodCurrencySymbol'] = $currency->getSymbol();
                 }
             }
 
@@ -351,11 +364,11 @@ $app->path('/incomes', function($request) use($app, $user) {
 
                 if ($paymentMethod) {
                     $incomes[$index]['sourceExpensePaymentMethodCurrencyId'] = $paymentMethod->getCurrencyId();
-                    $incomes[$index]['sourceExpensePaymentMethodCurrencyPseudo'] = $paymentMethod->getCurrencyPseudo();
                     $incomes[$index]['sourceExpensePaymentMethodName'] = $paymentMethod->getName();
 
                     $currency = CurrencyQuery::create()->findOneById($paymentMethod->getCurrencyId());
                     $incomes[$index]['sourceExpensePaymentMethodCurrencyCode'] = $currency->getCode();
+                    $incomes[$index]['sourceExpensePaymentMethodCurrencySymbol'] = $currency->getSymbol();
                 }
             }
 

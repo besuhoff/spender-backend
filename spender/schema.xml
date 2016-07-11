@@ -42,7 +42,6 @@
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
         <column name="color" type="varchar" size="9" />
-        <column name="currency_pseudo" type="varchar" size="255" />
         <column name="currency_id" type="integer" required="true" />
         <column name="user_id" type="integer" required="true"/>
         <foreign-key foreignTable="user">
