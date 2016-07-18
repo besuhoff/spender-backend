@@ -93,6 +93,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
             ->withColumn('SUM(amount)', 'sum');
 
         $tableName = \Map\PaymentMethodTableMap::TABLE_NAME;
+        $archiveTableName = \Map\PaymentMethodArchiveTableMap::TABLE_NAME;
 
         $con = \Propel\Runtime\Propel::getWriteConnection(\Map\PaymentMethodTableMap::DATABASE_NAME);
         $params = array();
@@ -104,28 +105,44 @@ $app->path('/payment-methods', function($request) use($app, $user) {
                 {$tableName}.user_id as UserId,
                 {$tableName}.created_at as CreatedAt,
                 {$tableName}.updated_at as UpdatedAt,
-                currency.code as currencyCode,
-                currency.symbol as currencySymbol,
                 expenses.sum as expenses,
-                incomes.sum as incomes
-            FROM $tableName
-            INNER JOIN currency ON currency.id = $tableName.currency_id
+                incomes.sum as incomes,
+                0 as _isRemoved
+            FROM {$tableName}
             LEFT OUTER JOIN ({$expenses->createSelectSql($params)}) AS expenses ON expenses.payment_method_id = {$tableName}.id
             LEFT OUTER JOIN ({$incomes->createSelectSql($params)}) AS incomes ON incomes.payment_method_id = {$tableName}.id
-            WHERE payment_method.user_id = :id
-            ORDER BY {$tableName}.name";
+            WHERE {$tableName}.user_id = :id1
+
+            UNION
+
+            SELECT
+                {$archiveTableName}.id as Id,
+                {$archiveTableName}.name as `Name`,
+                {$archiveTableName}.color as Color,
+                {$archiveTableName}.currency_id as CurrencyId,
+                {$archiveTableName}.user_id as UserId,
+                {$archiveTableName}.created_at as CreatedAt,
+                {$archiveTableName}.updated_at as UpdatedAt,
+                0 as expenses,
+                0 as incomes,
+                1 as _isRemoved
+            FROM {$archiveTableName}
+            WHERE {$archiveTableName}.user_id = :id2
+            ";
 
         $stmt = $con->prepare($sql);
-        $stmt->execute(array(':id' => $user->getId()));
+        $stmt->execute(array(
+            ':id1' => $user->getId(),
+            ':id2' => $user->getId()
+        ));
 
         $formatter = new \Propel\Runtime\Formatter\ObjectFormatter();
         $formatter->setClass('\PaymentMethod');
 
         $formatter->setAsColumns([
-            'currencyCode' => 'currencyCode',
-            'currencySymbol' => 'currencySymbol',
             'expenses' => 'expenses',
             'incomes' => 'incomes',
+            '_isRemoved' => '_isRemoved',
         ]);
 
         $objects = $formatter->format($con->getDataFetcher($stmt));
@@ -137,7 +154,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
         $paymentMethod = new PaymentMethod();
         $paymentMethod->setName($request->name);
         $paymentMethod->setColor($request->color);
-        $paymentMethod->setCurrencyId($request->currencyId);
+        $paymentMethod->setCurrencyId($request->get('currency.id'));
         $user->addPaymentMethod($paymentMethod);
         $user->save();
 
@@ -146,17 +163,21 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 
     $app->param('int', function($request, $paymentMethodId) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $paymentMethodId) {
-            $paymentMethod = PaymentMethodQuery::create()->findOneById($paymentMethodId);
+            $paymentMethod = PaymentMethodQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($paymentMethodId);
             $paymentMethod->setName($request->name);
             $paymentMethod->setColor($request->color);
-            $paymentMethod->setCurrencyId($request->currencyId);
+            $paymentMethod->setCurrencyId($request->get('currency.id'));
             $paymentMethod->save();
 
             return $paymentMethod->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
 
         $app->delete(function ($request) use ($app, $user, $paymentMethodId) {
-            $paymentMethod = PaymentMethodQuery::create()->findOneById($paymentMethodId);
+            $paymentMethod = PaymentMethodQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($paymentMethodId);
             $paymentMethod->delete();
 
             return '{}';
@@ -166,8 +187,25 @@ $app->path('/payment-methods', function($request) use($app, $user) {
 
 $app->path('/categories', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
-        $categories = CategoryQuery::create()->orderByName()->findByUserId($user->getId());
-        return $categories->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        $categories = CategoryQuery::create()
+            ->orderByName()
+            ->findByUserId($user->getId())
+            ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+
+        return array_merge(
+            $categories,
+            array_map(
+                function($item) {
+                    $item['_isRemoved'] = true;
+                    return $item;
+                },
+                CategoryArchiveQuery::create()
+                    ->orderByName()
+
+                    ->findByUserId($user->getId())
+                    ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME)
+            )
+        );
     });
 
     $app->post(function($request) use($app, $user) {
@@ -182,7 +220,9 @@ $app->path('/categories', function($request) use($app, $user) {
 
     $app->param('int', function($request, $categoryId) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $categoryId) {
-            $category = CategoryQuery::create()->findOneById($categoryId);
+            $category = CategoryQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($categoryId);
             $category->setName($request->name);
             $category->setColor($request->color);
             $category->save();
@@ -191,7 +231,9 @@ $app->path('/categories', function($request) use($app, $user) {
         });
 
         $app->delete(function ($request) use ($app, $user, $categoryId) {
-            $category = CategoryQuery::create()->findOneById($categoryId);
+            $category = CategoryQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($categoryId);
             $category->delete();
 
             return '{}';
@@ -201,8 +243,25 @@ $app->path('/categories', function($request) use($app, $user) {
 
 $app->path('/income-categories', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
-        $incomeCategories = IncomeCategoryQuery::create()->orderByName()->findByUserId($user->getId());
-        return $incomeCategories->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        $incomeCategories = IncomeCategoryQuery::create()
+            ->orderByName()
+            ->findByUserId($user->getId())
+            ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+
+        return array_merge(
+            $incomeCategories,
+            array_map(
+                function($item) {
+                    $item['_isRemoved'] = true;
+                    return $item;
+                },
+                IncomeCategoryArchiveQuery::create()
+                    ->orderByName()
+
+                    ->findByUserId($user->getId())
+                    ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME)
+            )
+        );
     });
 
     $app->post(function($request) use($app, $user) {
@@ -217,7 +276,9 @@ $app->path('/income-categories', function($request) use($app, $user) {
 
     $app->param('int', function($request, $categoryId) use($app, $user) {
         $app->patch(function ($request) use ($app, $user, $categoryId) {
-            $category = IncomeCategoryQuery::create()->findOneById($categoryId);
+            $category = IncomeCategoryQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($categoryId);
             $category->setName($request->name);
             $category->setColor($request->color);
             $category->save();
@@ -226,7 +287,9 @@ $app->path('/income-categories', function($request) use($app, $user) {
         });
 
         $app->delete(function ($request) use ($app, $user, $categoryId) {
-            $category = IncomeCategoryQuery::create()->findOneById($categoryId);
+            $category = IncomeCategoryQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($categoryId);
             $category->delete();
 
             return '{}';
@@ -238,56 +301,35 @@ $app->path('/expenses', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $expenses = ExpenseQuery::create()
             ->orderByCreatedAt()
-            ->leftJoinPaymentMethod()
-            ->withColumn('PaymentMethod.Name', 'paymentMethodName')
-            ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
-            ->withColumn('PaymentMethod.CurrencyId', 'paymentMethodCurrencyId')
-
-            ->leftJoin('PaymentMethod.Currency PaymentMethodCurrency')
-            ->withColumn('PaymentMethodCurrency.Code', 'paymentMethodCurrencyCode')
-            ->withColumn('PaymentMethodCurrency.Symbol', 'paymentMethodCurrencySymbol')
-
-            ->leftJoinCategory()
-            ->withColumn('Category.Name', 'categoryName')
-            ->withColumn('Category.Color', 'categoryColor')
 
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
-        foreach($expenses as $index => $expense) {
-            if ($expense['paymentMethodName'] === null) {
-                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($expense['paymentMethodId']);
-                if ($paymentMethod) {
-                    $expenses[$index]['paymentMethodName'] = $paymentMethod->getName();
-                    $expenses[$index]['paymentMethodColor'] = $paymentMethod->getColor();
-                    $expenses[$index]['paymentMethodCurrencyId'] = $paymentMethod->getCurrencyId();
+        return array_merge(
+            $expenses,
+            array_map(
+                function($item) {
+                    $item['_isRemoved'] = true;
+                    return $item;
+                },
+                ExpenseArchiveQuery::create()
+                    ->orderByCreatedAt()
 
-                    $currency = CurrencyQuery::create()->findOneById($paymentMethod->getCurrencyId());
-                    $expenses[$index]['paymentMethodCurrencyCode'] = $currency->getCode();
-                    $expenses[$index]['paymentMethodCurrencySymbol'] = $currency->getSymbol();
-                }
-            }
-
-            if ($expense['categoryName'] === null) {
-                $category = CategoryArchiveQuery::create()->findOneById($expense['categoryId']);
-                if ($category) {
-                    $expenses[$index]['categoryName'] = $category->getName();
-                    $expenses[$index]['categoryColor'] = $category->getColor();
-                }
-            }
-        }
-        return $expenses;
+                    ->findByUserId($user->getId())
+                    ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME)
+            )
+        );
     });
 
     $app->post(function($request) use($app, $user) {
         $expense = new Expense();
         $expense->setAmount($request->amount);
         $isValid = false;
-        if ($request->categoryId) {
-            $expense->setCategoryId($request->categoryId);
+        if ($request->category) {
+            $expense->setCategoryId($request->get('category.id'));
             $isValid = true;
-        } elseif ($request->targetIncomeId) {
-            $targetIncome = IncomeQuery::create()->findOneById($request->targetIncomeId);
+        } elseif ($request->targetIncome) {
+            $targetIncome = IncomeQuery::create()->findOneById($request->get('targetIncome.id'));
             if ($targetIncome && $targetIncome->getUser()->getId() === $user->getId()) {
                 $isValid = true;
                 $expense->setTargetIncomeId($targetIncome->getId());
@@ -301,12 +343,57 @@ $app->path('/expenses', function($request) use($app, $user) {
             $d = new DateTime($request->createdAt);
             $expense->setCreatedAt($d->getTimestamp());
         }
-        $expense->setPaymentMethodId($request->paymentMethodId);
+        $expense->setPaymentMethodId($request->get('paymentMethod.id'));
         $expense->setComment($request->comment);
         $user->addExpense($expense);
         $user->save();
 
         return $expense->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+    });
+
+    $app->param('int', function($request, $expenseId) use($app, $user) {
+        $app->patch(function($request) use($app, $user, $expenseId) {
+            $expense = ExpenseQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($expenseId);
+
+            $expense->setAmount($request->amount);
+            $isValid = false;
+            if ($request->category) {
+                $expense->setCategoryId($request->get('category.id'));
+                $isValid = true;
+            } elseif ($request->targetIncome) {
+                $targetIncome = IncomeQuery::create()
+                    ->filterByUserId($user->getId())
+                    ->findOneById($request->get('targetIncome.id'));
+                if ($targetIncome) {
+                    $isValid = true;
+                    $expense->setTargetIncomeId($targetIncome->getId());
+                }
+            }
+            if (!$isValid) {
+                return $app->response(422);
+            }
+
+            if ($request->createdAt) {
+                $d = new DateTime($request->createdAt);
+                $expense->setCreatedAt($d->getTimestamp());
+            }
+            $expense->setPaymentMethodId($request->get('paymentMethod.id'));
+            $expense->setComment($request->comment);
+            $expense->save();
+
+            return $expense->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        });
+
+        $app->delete(function ($request) use ($app, $user, $expenseId) {
+            $expense = ExpenseQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($expenseId);
+            $expense->delete();
+
+            return '{}';
+        });
     });
 });
 
@@ -314,100 +401,73 @@ $app->path('/incomes', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
         $incomes = IncomeQuery::create()
             ->orderByCreatedAt()
-            ->leftJoinPaymentMethod()
-            ->withColumn('PaymentMethod.Name', 'paymentMethodName')
-            ->withColumn('PaymentMethod.Color', 'paymentMethodColor')
-            ->withColumn('PaymentMethod.CurrencyId', 'paymentMethodCurrencyId')
-
-            ->leftJoin('PaymentMethod.Currency PaymentMethodCurrency')
-            ->withColumn('PaymentMethodCurrency.Code', 'paymentMethodCurrencyCode')
-            ->withColumn('PaymentMethodCurrency.Symbol', 'paymentMethodCurrencySymbol')
-
-            ->leftJoinIncomeCategory()
-            ->withColumn('IncomeCategory.Name', 'incomeCategoryName')
-            ->withColumn('IncomeCategory.Color', 'incomeCategoryColor')
-
-            ->leftJoinExpense()
-            ->withColumn('Expense.Id', 'sourceExpenseId')
-            ->withColumn('Expense.Amount', 'sourceExpenseAmount')
-            ->withColumn('Expense.PaymentMethodId', 'sourceExpensePaymentMethodId')
-
-            ->leftJoin('Expense.PaymentMethod ExpensePaymentMethod')
-            ->withColumn('ExpensePaymentMethod.CurrencyId', 'sourceExpensePaymentMethodCurrencyId')
-            ->withColumn('ExpensePaymentMethod.Name', 'sourceExpensePaymentMethodName')
-
-            ->leftJoin('ExpensePaymentMethod.Currency ExpensePaymentMethodCurrency')
-            ->withColumn('ExpensePaymentMethodCurrency.Code', 'sourceExpensePaymentMethodCurrencyCode')
-            ->withColumn('ExpensePaymentMethodCurrency.Symbol', 'sourceExpensePaymentMethodCurrencySymbol')
 
             ->findByUserId($user->getId())
             ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
 
-        foreach($incomes as $index => $income) {
-            if ($incomes[$index]['paymentMethodName'] === null) {
-                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($incomes[$index]['paymentMethodId']);
+        return array_merge(
+            $incomes,
+            array_map(
+                function($item) {
+                    $item['_isRemoved'] = true;
+                    return $item;
+                },
+                IncomeArchiveQuery::create()
+                    ->orderByCreatedAt()
 
-                if ($paymentMethod) {
-                    $incomes[$index]['paymentMethodName'] = $paymentMethod->getName();
-                    $incomes[$index]['paymentMethodColor'] = $paymentMethod->getColor();
-                    $incomes[$index]['paymentMethodCurrencyId'] = $paymentMethod->getCurrencyId();
-
-                    $currency = CurrencyQuery::create()->findOneById($paymentMethod->getCurrencyId());
-                    $incomes[$index]['paymentMethodCurrencyCode'] = $currency->getCode();
-                    $incomes[$index]['paymentMethodCurrencySymbol'] = $currency->getSymbol();
-                }
-            }
-
-            if ($incomes[$index]['sourceExpenseId'] && $incomes[$index]['sourceExpenseAmount'] === null) {
-                $expense = ExpenseArchiveQuery::create()->findOneById($incomes[$index]['sourceExpenseId']);
-
-                if ($expense) {
-                    $incomes[$index]['sourceExpenseAmount'] = $expense->getAmount();
-                    $incomes[$index]['sourceExpensePaymentMethodId'] = $expense->getPaymentMethodId();
-                }
-            }
-
-            if ($incomes[$index]['sourceExpensePaymentMethodId'] && $incomes[$index]['sourceExpensePaymentMethodName'] === null) {
-                $paymentMethod = PaymentMethodArchiveQuery::create()->findOneById($incomes[$index]['sourceExpensePaymentMethodId']);
-
-                if ($paymentMethod) {
-                    $incomes[$index]['sourceExpensePaymentMethodCurrencyId'] = $paymentMethod->getCurrencyId();
-                    $incomes[$index]['sourceExpensePaymentMethodName'] = $paymentMethod->getName();
-
-                    $currency = CurrencyQuery::create()->findOneById($paymentMethod->getCurrencyId());
-                    $incomes[$index]['sourceExpensePaymentMethodCurrencyCode'] = $currency->getCode();
-                    $incomes[$index]['sourceExpensePaymentMethodCurrencySymbol'] = $currency->getSymbol();
-                }
-            }
-
-            if ($incomes[$index]['incomeCategoryName'] === null) {
-                $category = IncomeCategoryArchiveQuery::create()->findOneById($incomes[$index]['incomeCategoryId']);
-
-                if ($category) {
-                    $incomes[$index]['incomeCategoryName'] = $category->getName();
-                    $incomes[$index]['incomeCategoryColor'] = $category->getColor();
-                }
-            }
-        }
-        return $incomes;
+                    ->findByUserId($user->getId())
+                    ->toArray(null, false, \Propel\Runtime\Map\TableMap::TYPE_CAMELNAME)
+            )
+        );
     });
 
     $app->post(function($request) use($app, $user) {
         $income = new Income();
         $income->setAmount($request->amount);
-        if ($request->incomeCategoryId) {
-            $income->setIncomeCategoryId($request->incomeCategoryId);
+        if ($request->incomeCategory) {
+            $income->setIncomeCategoryId($request->get('incomeCategory.id'));
         }
         if ($request->createdAt) {
             $d = new DateTime($request->createdAt);
             $income->setCreatedAt($d->getTimestamp());
         }
-        $income->setPaymentMethodId($request->paymentMethodId);
+        $income->setPaymentMethodId($request->get('paymentMethod.id'));
         $income->setComment($request->comment);
         $user->addIncome($income);
         $user->save();
 
         return $income->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+    });
+
+    $app->param('int', function($request, $incomeId) use($app, $user) {
+        $app->patch(function($request) use($app, $user, $incomeId) {
+            $income = IncomeQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($incomeId);
+
+            $income->setAmount($request->amount);
+            if ($request->incomeCategory) {
+                $income->setIncomeCategoryId($request->get('incomeCategory.id'));
+            }
+            if ($request->createdAt) {
+                $d = new DateTime($request->createdAt);
+                $income->setCreatedAt($d->getTimestamp());
+            }
+            $income->setPaymentMethodId($request->get('paymentMethod.id'));
+            $income->setComment($request->comment);
+            $income->save();
+
+            return $income->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+        });
+
+        $app->delete(function ($request) use ($app, $user, $incomeId) {
+            $income = IncomeQuery::create()
+                ->filterByUserId($user->getId())
+                ->findOneById($incomeId);
+            $income->delete();
+
+            return '{}';
+        });
     });
 });
 
