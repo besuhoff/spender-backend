@@ -41,6 +41,7 @@ function random_str($length, $keyspace = '0123456789abcdefghijklmnopqrstuvwxyzAB
 }
 
 $gapiUserId = false;
+$gapiResponse = false;
 $token = isset($_SERVER['HTTP_X_AUTH_TOKEN']) ? $_SERVER['HTTP_X_AUTH_TOKEN'] : '';
 
 $app = new Bullet\App();
@@ -73,14 +74,14 @@ if ($gapiUserId) {
    });
 }
 
-if (file_exists(USER_KEYS_DIR . '/' . $gapiUserId)) {
-    $encryptionKey = file_get_contents(USER_KEYS_DIR . '/' . $gapiUserId);
-}
-
 if (!$gapiUserId || !$user) {
     echo $app->response(403);
     exit(403);
 };
+
+if (file_exists(USER_KEYS_DIR . '/' . $gapiUserId)) {
+    $encryptionKey = file_get_contents(USER_KEYS_DIR . '/' . $gapiUserId);
+}
 
 $app->path('/payment-methods', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
@@ -103,6 +104,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
                 {$tableName}.color as Color,
                 {$tableName}.currency_id as CurrencyId,
                 {$tableName}.user_id as UserId,
+                {$tableName}.initial_amount as InitialAmount,
                 {$tableName}.created_at as CreatedAt,
                 {$tableName}.updated_at as UpdatedAt,
                 expenses.sum as expenses,
@@ -121,6 +123,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
                 {$archiveTableName}.color as Color,
                 {$archiveTableName}.currency_id as CurrencyId,
                 {$archiveTableName}.user_id as UserId,
+                {$archiveTableName}.initial_amount as InitialAmount,
                 {$archiveTableName}.created_at as CreatedAt,
                 {$archiveTableName}.updated_at as UpdatedAt,
                 0 as expenses,
@@ -153,6 +156,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
     $app->post(function($request) use($app, $user) {
         $paymentMethod = new PaymentMethod();
         $paymentMethod->setName($request->name);
+        $paymentMethod->setInitialAmount($request->initialAmount);
         $paymentMethod->setColor($request->color);
         $paymentMethod->setCurrencyId($request->get('currency.id'));
         $user->addPaymentMethod($paymentMethod);
@@ -167,6 +171,7 @@ $app->path('/payment-methods', function($request) use($app, $user) {
                 ->filterByUserId($user->getId())
                 ->findOneById($paymentMethodId);
             $paymentMethod->setName($request->name);
+            $paymentMethod->setInitialAmount($request->initialAmount);
             $paymentMethod->setColor($request->color);
             $paymentMethod->setCurrencyId($request->get('currency.id'));
             $paymentMethod->save();

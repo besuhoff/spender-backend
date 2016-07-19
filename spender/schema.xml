@@ -44,6 +44,7 @@
         <column name="color" type="varchar" size="9" />
         <column name="currency_id" type="integer" required="true" />
         <column name="user_id" type="integer" required="true"/>
+        <column name="initial_amount" type="decimal" size="24" scale="4" required="true" default="0"/>
         <foreign-key foreignTable="user">
             <reference local="user_id" foreign="id"/>
         </foreign-key>
