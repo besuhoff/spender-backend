@@ -64,6 +64,7 @@ if ($gapiUserId) {
                 $user->setGapiUserId($gapiUserId);
                 $user->setEmail($gapiResponse->email);
                 $user->setName($gapiResponse->name);
+                $user->setNeedsWizard(true);
                 $user->save();
 
                 file_put_contents(USER_KEYS_DIR . '/' . $gapiUserId, random_str(random_int(90, 128)));
@@ -82,6 +83,15 @@ if (!$gapiUserId || !$user) {
 if (file_exists(USER_KEYS_DIR . '/' . $gapiUserId)) {
     $encryptionKey = file_get_contents(USER_KEYS_DIR . '/' . $gapiUserId);
 }
+
+$app->path('/user', function($request) use($app, $user) {
+    $app->patch(function ($request) use ($app, $user) {
+        $user->setNeedsWizard($request->needsWizard);
+        $user->save();
+
+        return $user->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
+    });
+});
 
 $app->path('/payment-methods', function($request) use($app, $user) {
     $app->get(function($request) use($app, $user) {
