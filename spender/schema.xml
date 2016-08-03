@@ -14,7 +14,7 @@
         <column name="gapi_user_id" type="varchar" size="255" required="true"/>
         <column name="email" type="varchar" size="1024" required="true"/>
         <column name="name" type="varchar" size="1024" required="true"/>
-        <column name="needs_wizard" type="boolean"/>
+        <column name="wizard_step" type="integer"/>
         <behavior name="timestampable" />
     </table>
     <table name="category" phpName="Category">

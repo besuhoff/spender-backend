@@ -64,11 +64,15 @@ if ($gapiUserId) {
                 $user->setGapiUserId($gapiUserId);
                 $user->setEmail($gapiResponse->email);
                 $user->setName($gapiResponse->name);
-                $user->setNeedsWizard(true);
-                $user->save();
+                $user->setWizardStep(1);
 
                 file_put_contents(USER_KEYS_DIR . '/' . $gapiUserId, random_str(random_int(90, 128)));
+            } else {
+                $user->setEmail($gapiResponse->email);
+                $user->setName($gapiResponse->name);
             }
+
+            $user->save();
 
             return $user->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
         });
@@ -86,7 +90,7 @@ if (file_exists(USER_KEYS_DIR . '/' . $gapiUserId)) {
 
 $app->path('/user', function($request) use($app, $user) {
     $app->patch(function ($request) use ($app, $user) {
-        $user->setNeedsWizard($request->needsWizard);
+        $user->setWizardStep($request->wizardStep);
         $user->save();
 
         return $user->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
