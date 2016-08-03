@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="spender" defaultIdMethod="native">
-    <table name="currency" phpName="Currency">
+    <table name="currency" phpName="Currency" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="symbol" type="varchar" size="12" required="true"/>
         <column name="symbol_native" type="varchar" size="12" required="true"/>
@@ -17,7 +17,7 @@
         <column name="wizard_step" type="integer"/>
         <behavior name="timestampable" />
     </table>
-    <table name="category" phpName="Category">
+    <table name="category" phpName="Category" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
         <column name="color" type="varchar" size="9" />
@@ -28,7 +28,7 @@
         <behavior name="timestampable" />
         <behavior name="archivable" />
     </table>
-    <table name="income_category" phpName="IncomeCategory">
+    <table name="income_category" phpName="IncomeCategory" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
         <column name="color" type="varchar" size="9" />
@@ -39,7 +39,7 @@
         <behavior name="timestampable" />
         <behavior name="archivable" />
     </table>
-    <table name="payment_method" phpName="PaymentMethod">
+    <table name="payment_method" phpName="PaymentMethod" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="name" type="varchar" size="255" required="true" />
         <column name="color" type="varchar" size="9" />
@@ -55,7 +55,7 @@
         <behavior name="timestampable" />
         <behavior name="archivable" />
     </table>
-    <table name="expense" phpName="Expense">
+    <table name="expense" phpName="Expense" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="amount" type="decimal" size="24" scale="4" required="true"/>
         <column name="comment" type="varchar" size="2048"/>
@@ -78,7 +78,7 @@
         <behavior name="timestampable" />
         <behavior name="archivable" />
     </table>
-    <table name="income" phpName="Income">
+    <table name="income" phpName="Income" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="amount" type="decimal" size="24" scale="4" required="true"/>
         <column name="comment" type="varchar" size="2048"/>
