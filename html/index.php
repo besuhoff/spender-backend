@@ -66,12 +66,29 @@ if ($gapiUserId) {
                 $user->setName($gapiResponse->name);
                 $user->setWizardStep(1);
 
+                $sampleCategories = CategorySampleQuery::create()->find();
+                foreach ($sampleCategories as $sampleCategory) {
+                    $category = new Category();
+
+                    $sampleCategory->setLocale($gapiResponse->locale);
+                    $name = $sampleCategory->getName();
+
+                    if (!$name) {
+                        $sampleCategory->setLocale('en');
+                        $name = $sampleCategory->getName();
+                    }
+
+                    $category->setName($name);
+
+                    $category->setColor($sampleCategory->getColor());
+                    $user->addCategory($category);
+                }
+
                 file_put_contents(USER_KEYS_DIR . '/' . $gapiUserId, random_str(random_int(90, 128)));
             } else {
                 $user->setEmail($gapiResponse->email);
                 $user->setName($gapiResponse->name);
             }
-
             $user->save();
 
             return $user->toArray(\Propel\Runtime\Map\TableMap::TYPE_CAMELNAME);
