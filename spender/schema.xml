@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<database name="spender" defaultIdMethod="native">
+<database name="spender" defaultIdMethod="native" identifierQuoting="true">
     <table name="currency" phpName="Currency" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="symbol" type="varchar" size="12" required="true"/>
@@ -63,6 +63,41 @@
         <behavior name="timestampable" />
         <behavior name="archivable" />
     </table>
+
+    <table name="limit" phpName="Limit" allowPkInsert="true">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="name" type="varchar" size="255" required="true" />
+        <column name="color" type="varchar" size="9" />
+        <column name="user_id" type="integer" required="true"/>
+        <column name="value" type="decimal" size="24" scale="4" required="true" default="0"/>
+        <column name="period" type="varchar" size="255" required="true" />
+        <foreign-key foreignTable="user">
+            <reference local="user_id" foreign="id"/>
+        </foreign-key>
+        <behavior name="timestampable" />
+        <behavior name="archivable" />
+    </table>
+    <table name="limit_category" isCrossRef="true">
+        <column name="limit_id" type="integer" primaryKey="true"/>
+        <column name="category_id" type="integer" primaryKey="true"/>
+        <foreign-key foreignTable="limit">
+            <reference local="limit_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="category">
+            <reference local="category_id" foreign="id"/>
+        </foreign-key>
+    </table>
+    <table name="limit_payment_method" isCrossRef="true">
+        <column name="limit_id" type="integer" primaryKey="true"/>
+        <column name="payment_method_id" type="integer" primaryKey="true"/>
+        <foreign-key foreignTable="limit">
+            <reference local="limit_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="payment_method">
+            <reference local="payment_method_id" foreign="id"/>
+        </foreign-key>
+    </table>
+
     <table name="expense" phpName="Expense" allowPkInsert="true">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="amount" type="decimal" size="24" scale="4" required="true"/>

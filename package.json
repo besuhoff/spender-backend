@@ -4,12 +4,9 @@
   "description": "Spender: Funds Management Made Easy",
   "author": "Sergiy Pereverziev <albert.besuhoff@gmail.com>",
   "homepage": "http://spender.pereborstudio.com",
-  "devDependencies": {
-    "sng": "0.2.1"
-  },
   "scripts": {
     "postinstall": "mkdir user-keys -p --mode=777; mkdir -p spender/generated-classes; composer update; npm run-script propel",
-    "start": "sng -n '127.0.0.1:8090' -p '127.0.0.1:8089' -b zend",
+    "start": "php -S spender.pereborstudio.develop:8090 -t html",
     "propel": "cd spender; ../vendor/bin/propel sql:build --overwrite; ../vendor/bin/propel model:build; ../vendor/bin/propel config:convert; cd ..; composer dump-autoload"
   }
 }
